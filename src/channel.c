@@ -24,6 +24,7 @@ static struct channel_ops *ops[CHANNEL_MAX];
 extern struct channel_ops channel_mcast;
 extern struct channel_ops channel_udp;
 extern struct channel_ops channel_tcp;
+extern struct channel_ops channel_tipc;
 
 static struct queue *errorq;
 
@@ -32,6 +33,7 @@ int channel_init(void)
 	ops[CHANNEL_MCAST] = &channel_mcast;
 	ops[CHANNEL_UDP] = &channel_udp;
 	ops[CHANNEL_TCP] = &channel_tcp;
+	ops[CHANNEL_TIPC] = &channel_tipc;
 
 	errorq = queue_create("errorq", CONFIG(channelc).error_queue_length, 0);
 	if (errorq == NULL) {

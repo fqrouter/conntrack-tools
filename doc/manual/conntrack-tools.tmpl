@@ -573,20 +573,27 @@ Sync {
 </sect3>
 
 <sect3 id="sync-transport-protocol">
-<title>Using UDP, TCP or multicast for flow-state synchronization</title>
+
+<title>Using UDP, multicast, TCP or TIPC for flow-state synchronization</title>
 
  <para>You can use up to three different transport layer protocols to
- synchronize flow-state changes between the firewalls: UDP, TCP and
- Multicast. UDP and multicast are unreliable but together with the FT-FW
- mode provide partial reliable flow-state synchronization.
+ synchronize flow-state changes between the firewalls: UDP, TCP, Multicast and
+TIPC. UDP and multicast are unreliable but together with the FT-FW
+ mode provide partial reliable flow-state synchronization. TIPC provides a
+connectionless yet reliable message-based delivery system.
  </para>
 
- <para>The preferred choice is FT-FW over UDP, or multicast alternatively.
+ <para>The preferred choice is FT-FW over UDP unicast/multicast, or TIPC alternatively.
  TCP introduces latency in the flow-state synchronization due to the
  congestion control. Under flow-state message are lost, the FIFO delivery
  becomes also a problem since the backup firewall quickly gets out of
  sync. For that reason, its use is discouraged. Note that using TCP only
  makes sense with the NOTRACK mode.
+ TIPC provides some kind of link level sequencing in order to guarantee succesfull
+ delivery of messages between nodes in the cluster. Hence, it is recommended to use it
+ along with NOTRACK mode to minimise protocol overhead on the firewalls dedicated link.
+ Further informations on how to configure TIPC can be found in the README file under
+ the doc/notrack/ directory
  </para>
 
 </sect3>

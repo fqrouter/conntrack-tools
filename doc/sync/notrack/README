@@ -1,3 +1,13 @@
-This directory contains the files for the NOTRACK replication protocol. This
-protocol provides best effort delivery. Therefore, it is unreliable unless
-that you select TCP-based state-synchronization.
+Installation instructions :
+
+TIPC is a built-in kernel module since kernel version 2.6.35 ; please make sure your using a => 2.6.35 kernel with TIPC 2.0, as this patch has not been tested with older versions of the protocol yet.
+
+For easy and fast configuration, you must install the TIPC utilies v2.0.0, available from sources here : 
+
+    git://tipc.git.sourceforge.net/gitroot/tipc/tipcutils (branch tipcutils2.0)
+
+or by using aptitude on debian distributions :
+
+    sudo apt-get install tipcutils
+
+For further details on installation, node and network configuration, please refer to the online documentation : http://tipc.sourceforge.net/doc/tipc_2.0_users_guide.html#installation.

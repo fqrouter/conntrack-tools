@@ -47,6 +47,7 @@ ip6_part	{hex_255}":"?
 ip6_form1	{ip6_part}{0,16}"::"{ip6_part}{0,16}
 ip6_form2	({hex_255}":"){16}{hex_255}
 ip6		{ip6_form1}{ip6_cidr}?|{ip6_form2}{ip6_cidr}?
+tipc_name	{integer}":"{integer}
 string		[a-zA-Z][a-zA-Z0-9\.\-]*
 persistent	[P|p][E|e][R|r][S|s][I|i][S|s][T|t][E|e][N|n][T|T]
 nack		[N|n][A|a][C|c][K|k]
@@ -63,9 +64,13 @@ notrack		[N|n][O|o][T|t][R|r][A|a][C|c][K|k]
 "IPv4_interface"		{ return T_IPV4_IFACE; }
 "IPv6_interface"		{ return T_IPV6_IFACE; }
 "Interface"			{ return T_IFACE; }
+"TIPC_Destination_Name" 	{ return T_TIPC_DEST_NAME; }
+"TIPC_Name"			{ return T_TIPC_NAME; }
+"TIPC_Message_Importance"	{ return T_TIPC_MESSAGE_IMPORTANCE; }
 "Multicast"			{ return T_MULTICAST; }
 "UDP"				{ return T_UDP; }
 "TCP"				{ return T_TCP; }
+"TIPC"                          { return T_TIPC; }
 "HashSize"			{ return T_HASHSIZE; }
 "RefreshTime"			{ return T_REFRESH; }
 "CacheTimeout"			{ return T_EXPIRE; }
@@ -149,6 +154,8 @@ notrack		[N|n][O|o][T|t][R|r][A|a][C|c][K|k]
 {signed_integer}	{ yylval.val = atoi(yytext); return T_SIGNED_NUMBER; }
 {ip4}			{ yylval.string = strdup(yytext); return T_IP; }
 {ip6}			{ yylval.string = strdup(yytext); return T_IP; }
+{tipc_name}		{ yylval.string = strdup(yytext); return T_TIPC_NAME_VAL; }
+
 {path}			{ yylval.string = strdup(yytext); return T_PATH_VAL; }
 {alarm}			{ return T_ALARM; }
 {persistent}		{ fprintf(stderr, "\nWARNING: Now `persistent' mode "

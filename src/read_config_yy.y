@@ -30,6 +30,7 @@
 #include "cidr.h"
 #include <syslog.h>
 #include <sched.h>
+#include <linux/tipc.h>
 #include <libnetfilter_conntrack/libnetfilter_conntrack.h>
 #include <libnetfilter_conntrack/libnetfilter_conntrack_tcp.h>
 
@@ -74,8 +75,9 @@ static void __max_dedicated_links_reached(void);
 %token T_SCHEDULER T_TYPE T_PRIO T_NETLINK_EVENTS_RELIABLE
 %token T_DISABLE_INTERNAL_CACHE T_DISABLE_EXTERNAL_CACHE T_ERROR_QUEUE_LENGTH
 %token T_OPTIONS T_TCP_WINDOW_TRACKING T_EXPECT_SYNC
+%token T_TIPC T_TIPC_DEST_NAME T_TIPC_NAME T_TIPC_MESSAGE_IMPORTANCE
 
-%token <string> T_IP T_PATH_VAL
+%token <string> T_IP T_PATH_VAL T_TIPC_NAME_VAL
 %token <val> T_NUMBER
 %token <val> T_SIGNED_NUMBER
 %token <string> T_STRING
@@ -150,7 +152,7 @@ syslog_facility : T_SYSLOG T_STRING
 
 	if (conf.stats.syslog_facility != -1 &&
 	    conf.syslog_facility != conf.stats.syslog_facility)
-	    	print_err(CTD_CFG_WARN, "conflicting Syslog facility "
+		print_err(CTD_CFG_WARN, "conflicting Syslog facility "
 					"values, defaulting to General");
 };
 
@@ -309,7 +311,7 @@ multicast_option : T_IPV4_ADDR T_IP
 		break;
 	}
 
-        if (conf.channel[conf.channel_num].u.mcast.ipproto == AF_INET6) {
+	if (conf.channel[conf.channel_num].u.mcast.ipproto == AF_INET6) {
 		print_err(CTD_CFG_WARN, "your multicast address is IPv4 but "
 					"is binded to an IPv6 interface? "
 					"Surely, this is not what you want");
@@ -368,7 +370,7 @@ multicast_option : T_IPV4_IFACE T_IP
 		break;
 	}
 
-        if (conf.channel[conf.channel_num].u.mcast.ipproto == AF_INET6) {
+	if (conf.channel[conf.channel_num].u.mcast.ipproto == AF_INET6) {
 		print_err(CTD_CFG_WARN, "your multicast interface is IPv4 but "
 					"is binded to an IPv6 interface? "
 					"Surely, this is not what you want");
@@ -381,7 +383,7 @@ multicast_option : T_IPV4_IFACE T_IP
 multicast_option : T_IPV6_IFACE T_IP
 {
 	print_err(CTD_CFG_WARN, "`IPv6_interface' not required, ignoring");
-}
+};
 
 multicast_option : T_IFACE T_STRING
 {
@@ -438,6 +440,92 @@ multicast_option: T_CHECKSUM T_OFF
 {
 	__max_dedicated_links_reached();
 	conf.channel[conf.channel_num].u.mcast.checksum = 1;
+};
+
+tipc_line : T_TIPC '{' tipc_options '}'
+{
+	if (conf.channel_type_global != CHANNEL_NONE &&
+	    conf.channel_type_global != CHANNEL_TIPC) {
+		print_err(CTD_CFG_ERROR, "cannot use `TIPC' with other "
+					 "dedicated link protocols!");
+		exit(EXIT_FAILURE);
+	}
+	conf.channel_type_global = CHANNEL_TIPC;
+	conf.channel[conf.channel_num].channel_type = CHANNEL_TIPC;
+	conf.channel[conf.channel_num].channel_flags = CHANNEL_F_BUFFERED;
+	conf.channel_num++;
+};
+
+tipc_line : T_TIPC T_DEFAULT '{' tipc_options '}'
+{
+	if (conf.channel_type_global != CHANNEL_NONE &&
+	    conf.channel_type_global != CHANNEL_TIPC) {
+		print_err(CTD_CFG_ERROR, "cannot use `TIPC' with other "
+					 "dedicated link protocols!");
+		exit(EXIT_FAILURE);
+	}
+	conf.channel_type_global = CHANNEL_TIPC;
+	conf.channel[conf.channel_num].channel_type = CHANNEL_TIPC;
+	conf.channel[conf.channel_num].channel_flags = CHANNEL_F_DEFAULT |
+						       CHANNEL_F_BUFFERED;
+	conf.channel_default = conf.channel_num;
+	conf.channel_num++;
+};
+
+tipc_options :
+	     | tipc_options tipc_option;
+
+tipc_option : T_TIPC_DEST_NAME T_TIPC_NAME_VAL
+{	
+	__max_dedicated_links_reached();
+
+	if(sscanf($2, "%d:%d", &conf.channel[conf.channel_num].u.tipc.client.type, &conf.channel[conf.channel_num].u.tipc.client.instance) != 2) {
+		print_err(CTD_CFG_WARN, "Please enter TIPC name in the form type:instance (ex: 1000:50)");
+		break;
+	}
+	conf.channel[conf.channel_num].u.tipc.ipproto = AF_TIPC;
+};
+
+tipc_option : T_TIPC_NAME T_TIPC_NAME_VAL
+{
+	__max_dedicated_links_reached();
+
+	if(sscanf($2, "%d:%d", &conf.channel[conf.channel_num].u.tipc.server.type, &conf.channel[conf.channel_num].u.tipc.server.instance) != 2) {
+		print_err(CTD_CFG_WARN, "Please enter TIPC name in the form type:instance (ex: 1000:50)");
+		break;
+	}
+	conf.channel[conf.channel_num].u.tipc.ipproto = AF_TIPC;
+};
+
+tipc_option : T_IFACE T_STRING
+{
+	unsigned int idx;
+
+	__max_dedicated_links_reached();
+
+	strncpy(conf.channel[conf.channel_num].channel_ifname, $2, IFNAMSIZ);
+
+	idx = if_nametoindex($2);
+	if (!idx) {
+		print_err(CTD_CFG_WARN, "%s is an invalid interface", $2);
+		break;
+	}
+};
+
+tipc_option : T_TIPC_MESSAGE_IMPORTANCE T_STRING
+{
+	if(!strcmp("LOW", $2))
+		conf.channel[conf.channel_num].u.tipc.msgImportance = TIPC_LOW_IMPORTANCE;
+	if(!strcmp("MEDIUM", $2))
+		conf.channel[conf.channel_num].u.tipc.msgImportance = TIPC_MEDIUM_IMPORTANCE;
+	if(!strcmp("HIGH", $2))
+		conf.channel[conf.channel_num].u.tipc.msgImportance = TIPC_HIGH_IMPORTANCE;
+	if(!strcmp("CRITICAL", $2))
+		conf.channel[conf.channel_num].u.tipc.msgImportance = TIPC_CRITICAL_IMPORTANCE;
+	if(conf.channel[conf.channel_num].u.tipc.msgImportance < TIPC_LOW_IMPORTANCE || conf.channel[conf.channel_num].u.tipc.msgImportance > TIPC_CRITICAL_IMPORTANCE) {
+		print_err(CTD_CFG_WARN, "%s is an invalid message importance level (defaulting to TIPC_HIGH_IMPORTANCE)", $2);
+		conf.channel[conf.channel_num].u.tipc.msgImportance = TIPC_HIGH_IMPORTANCE;
+	}
 };
 
 udp_line : T_UDP '{' udp_options '}'
@@ -800,6 +888,7 @@ sync_line: refreshtime
 	 | multicast_line
 	 | udp_line
 	 | tcp_line
+	 | tipc_line
 	 | relax_transitions
 	 | delay_destroy_msgs
 	 | sync_mode_alarm
@@ -861,7 +950,7 @@ option: T_EXPECT_SYNC '{' expect_list '}'
 };
 
 expect_list:
-            | expect_list expect_item ;
+	    | expect_list expect_item ;
 
 expect_item: T_STRING
 {
@@ -887,8 +976,8 @@ sync_mode_alarm_list:
 	      | sync_mode_alarm_list sync_mode_alarm_line;
 
 sync_mode_alarm_line: refreshtime
-              		 | expiretime
-	     		 | timeout
+			 | expiretime
+			 | timeout
 			 | purge
 			 | relax_transitions
 			 | delay_destroy_msgs
@@ -1020,7 +1109,7 @@ tcp_state: T_ESTABLISHED
 			    TCP_CONNTRACK_ESTABLISHED);
 
 	__kernel_filter_add_state(TCP_CONNTRACK_ESTABLISHED);
-};
+}
 tcp_state: T_FIN_WAIT
 {
 	ct_filter_add_state(STATE(us_filter),

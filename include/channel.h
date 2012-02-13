@@ -4,6 +4,7 @@
 #include "mcast.h"
 #include "udp.h"
 #include "tcp.h"
+#include "tipc.h"
 
 struct channel;
 struct nethdr;
@@ -13,6 +14,7 @@ enum {
 	CHANNEL_MCAST,
 	CHANNEL_UDP,
 	CHANNEL_TCP,
+	CHANNEL_TIPC,
 	CHANNEL_MAX,
 };
 
@@ -31,6 +33,11 @@ struct tcp_channel {
 	struct tcp_sock *server;
 };
 
+struct tipc_channel {
+	struct tipc_sock *client;
+	struct tipc_sock *server;
+};
+
 #define CHANNEL_F_DEFAULT	(1 << 0)
 #define CHANNEL_F_BUFFERED	(1 << 1)
 #define CHANNEL_F_STREAM	(1 << 2)
@@ -41,6 +48,7 @@ union channel_type_conf {
 	struct mcast_conf mcast;
 	struct udp_conf udp;
 	struct tcp_conf tcp;
+	struct tipc_conf tipc;
 };
 
 struct channel_conf {
@@ -97,7 +105,7 @@ void channel_stats(struct channel *c, int fd);
 void channel_stats_extended(struct channel *c, int active,
 			    struct nlif_handle *h, int fd);
 
-#define MULTICHANNEL_MAX	4
+#define MULTICHANNEL_MAX	5
 
 struct multichannel {
 	int		channel_num;

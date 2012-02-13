@@ -18,7 +18,7 @@ conntrackd_SOURCES = alarm.c main.c run.c hash.c queue.c rbtree.c \
 		    traffic_stats.c stats-mode.c \
 		    network.c cidr.c \
 		    build.c parse.c \
-		    channel.c multichannel.c channel_mcast.c channel_udp.c \
+		    channel.c multichannel.c channel_mcast.c channel_udp.c tipc.c channel_tipc.c \
 		    tcp.c channel_tcp.c \
 		    external_cache.c external_inject.c \
 		    internal_cache.c internal_bypass.c \
