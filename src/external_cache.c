@@ -31,14 +31,12 @@ static struct cache *external_exp;
 static int external_cache_init(void)
 {
 	external = cache_create("external", CACHE_T_CT,
-				STATE_SYNC(sync)->external_cache_flags,
 				NULL, &cache_sync_external_ct_ops);
 	if (external == NULL) {
 		dlog(LOG_ERR, "can't allocate memory for the external cache");
 		return -1;
 	}
 	external_exp = cache_create("external", CACHE_T_EXP,
-				STATE_SYNC(sync)->external_cache_flags,
 				NULL, &cache_sync_external_exp_ops);
 	if (external_exp == NULL) {
 		dlog(LOG_ERR, "can't allocate memory for the external cache");

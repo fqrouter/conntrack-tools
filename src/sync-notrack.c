@@ -258,8 +258,6 @@ static int notrack_init(void)
 }
 
 struct sync_mode sync_notrack = {
-	.internal_cache_flags	= NO_FEATURES,
-	.external_cache_flags	= NO_FEATURES,
 	.internal_cache_extra	= &cache_notrack_extra,
 	.init			= notrack_init,
 	.local			= notrack_local,

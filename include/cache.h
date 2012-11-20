@@ -6,17 +6,6 @@
 #include "hash.h"
 #include "date.h"
 
-/* cache features */
-enum {
-	NO_FEATURES = 0,
-
-	TIMER_FEATURE = 0,
-	TIMER = (1 << TIMER_FEATURE),
-
-	__CACHE_MAX_FEATURE
-};
-#define CACHE_MAX_FEATURE __CACHE_MAX_FEATURE
-
 enum {
 	C_OBJ_NONE = 0,		/* not in the cache */
 	C_OBJ_NEW,		/* just added to the cache */
@@ -37,16 +26,6 @@ struct cache_object {
 	char	data[0];
 };
 
-struct cache_feature {
-	size_t size;
-	void (*add)(struct cache_object *obj, void *data);
-	void (*update)(struct cache_object *obj, void *data);
-	void (*destroy)(struct cache_object *obj, void *data);
-	int  (*dump)(struct cache_object *obj, void *data, char *buf, int type);
-};
-
-extern struct cache_feature timer_feature;
-
 #define CACHE_MAX_NAMELEN 32
 
 enum cache_type {
@@ -61,10 +40,6 @@ struct cache {
 	enum cache_type type;
 	struct hashtable *h;
 
-	unsigned int num_features;
-	struct cache_feature **features;
-	unsigned int feature_type[CACHE_MAX_FEATURE];
-	unsigned int *feature_offset;
 	struct cache_ops *ops;
 	struct cache_extra *extra;
 	unsigned int extra_offset;
@@ -102,6 +77,7 @@ struct cache_extra {
 	void (*add)(struct cache_object *obj, void *data);
 	void (*update)(struct cache_object *obj, void *data);
 	void (*destroy)(struct cache_object *obj, void *data);
+	int  (*dump)(struct cache_object *obj, void *data, char *buf, int type);
 };
 
 struct nfct_handle;
@@ -135,7 +111,7 @@ extern struct cache_ops cache_sync_external_exp_ops;
 
 struct nf_conntrack;
 
-struct cache *cache_create(const char *name, enum cache_type type, unsigned int features, struct cache_extra *extra, struct cache_ops *ops);
+struct cache *cache_create(const char *name, enum cache_type type, struct cache_extra *extra, struct cache_ops *ops);
 void cache_destroy(struct cache *e);
 
 struct cache_object *cache_object_new(struct cache *c, void *ptr);

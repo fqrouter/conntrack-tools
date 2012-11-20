@@ -38,8 +38,7 @@ static int init_stats(void)
 	}
 	memset(state.stats, 0, sizeof(struct ct_stats_state));
 
-	STATE_STATS(cache) = cache_create("stats", CACHE_T_CT,
-					  NO_FEATURES, NULL,
+	STATE_STATS(cache) = cache_create("stats", CACHE_T_CT, NULL,
 					  &cache_stats_ct_ops);
 	if (!STATE_STATS(cache)) {
 		dlog(LOG_ERR, "can't allocate memory for the "

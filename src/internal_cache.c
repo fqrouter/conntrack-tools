@@ -24,7 +24,6 @@ static int internal_cache_init(void)
 {
 	STATE(mode)->internal->ct.data =
 		cache_create("internal", CACHE_T_CT,
-			     STATE_SYNC(sync)->internal_cache_flags,
 			     STATE_SYNC(sync)->internal_cache_extra,
 			     &cache_sync_internal_ct_ops);
 
@@ -35,7 +34,6 @@ static int internal_cache_init(void)
 
 	STATE(mode)->internal->exp.data =
 		cache_create("internal", CACHE_T_EXP,
-			STATE_SYNC(sync)->internal_cache_flags,
 			STATE_SYNC(sync)->internal_cache_extra,
 			&cache_sync_internal_exp_ops);
 

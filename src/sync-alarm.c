@@ -1,6 +1,6 @@
 /*
- * (C) 2006-2011 by Pablo Neira Ayuso <pablo@netfilter.org>
- * (C) 2011 by Vyatta Inc. <http://www.vyatta.com>
+ * (C) 2006-2012 by Pablo Neira Ayuso <pablo@netfilter.org>
+ * (C) 2011-2012 by Vyatta Inc. <http://www.vyatta.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -151,10 +151,62 @@ static void alarm_xmit(void)
 	queue_iterate(STATE_SYNC(tx_queue), NULL, tx_queue_xmit);
 }
 
+static void timeout(struct alarm_block *a, void *data)
+{
+	struct cache_object *obj = data;
+
+	cache_del(obj->cache, obj);
+	cache_object_free(obj);
+}
+
+static void cache_timer_add(struct cache_object *obj, void *data)
+{
+	struct alarm_block *a = data;
+
+	init_alarm(a, obj, timeout);
+	add_alarm(a, CONFIG(cache_timeout), 0);
+}
+
+static void cache_timer_update(struct cache_object *obj, void *data)
+{
+	struct alarm_block *a = data;
+	add_alarm(a, CONFIG(cache_timeout), 0);
+}
+
+static void cache_timer_destroy(struct cache_object *obj, void *data)
+{
+	struct alarm_block *a = data;
+	del_alarm(a);
+}
+
+static int
+cache_timer_dump(struct cache_object *obj, void *data, char *buf, int type)
+{
+	struct timeval tv, tmp;
+	struct alarm_block *a = data;
+
+	if (type == NFCT_O_XML)
+		return 0;
+
+	if (!alarm_pending(a))
+		return 0;
+
+	gettimeofday(&tv, NULL);
+	timersub(&a->tv, &tv, &tmp);
+	return sprintf(buf, " [expires in %lds]", tmp.tv_sec);
+}
+
+static struct cache_extra cache_timeout_extra = {
+	.size 		= sizeof(struct alarm_block),
+	.add		= cache_timer_add,
+	.update		= cache_timer_update,
+	.destroy	= cache_timer_destroy,
+	.dump		= cache_timer_dump,
+};
+
 struct sync_mode sync_alarm = {
-	.internal_cache_flags	= NO_FEATURES,
-	.external_cache_flags	= TIMER,
 	.internal_cache_extra	= &cache_alarm_extra,
+	.external_cache_extra	= &cache_timeout_extra,
 	.recv 			= alarm_recv,
 	.enqueue		= alarm_enqueue,
 	.xmit			= alarm_xmit,

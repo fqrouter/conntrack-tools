@@ -119,8 +119,6 @@ static int cache_ct_dump_step(void *data1, void *n)
 	int size;
 	struct __dump_container *container = data1;
 	struct cache_object *obj = n;
-	char *data = obj->data;
-	unsigned i;
 
 	/*
 	 * XXX: Do not dump the entries that are scheduled to expire.
@@ -147,14 +145,12 @@ static int cache_ct_dump_step(void *data1, void *n)
 			     container->type,
 			     0);
 
-	for (i = 0; i < obj->cache->num_features; i++) {
-		if (obj->cache->features[i]->dump) {
-			size += obj->cache->features[i]->dump(obj, 
-							      data, 
-							      buf+size,
-							      container->type);
-			data += obj->cache->features[i]->size;
-		}
+	if (obj->cache->extra && obj->cache->extra->dump) {
+		size += obj->cache->extra->dump(obj,
+						((char *) obj) +
+						   obj->cache->extra_offset,
+						buf+size,
+						container->type);
 	}
 	if (container->type != NFCT_O_XML) {
 		long tm = time(NULL);

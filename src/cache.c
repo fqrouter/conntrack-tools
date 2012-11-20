@@ -29,21 +29,12 @@
 #include <string.h>
 #include <time.h>
 
-struct cache_feature *cache_feature[CACHE_MAX_FEATURE] = {
-	[TIMER_FEATURE]		= &timer_feature,
-};
-
 struct cache *cache_create(const char *name, enum cache_type type,
-			   unsigned int features, 
 			   struct cache_extra *extra,
 			   struct cache_ops *ops)
 {
 	size_t size = sizeof(struct cache_object);
-	int i, j = 0;
 	struct cache *c;
-	struct cache_feature *feature_array[CACHE_MAX_FEATURE] = {};
-	unsigned int feature_offset[CACHE_MAX_FEATURE] = {};
-	unsigned int feature_type[CACHE_MAX_FEATURE] = {};
 
 	if (type == CACHE_T_NONE || type >= CACHE_T_MAX)
 		return NULL;
@@ -56,43 +47,13 @@ struct cache *cache_create(const char *name, enum cache_type type,
 	strcpy(c->name, name);
 	c->type = type;
 
-	for (i = 0; i < CACHE_MAX_FEATURE; i++) {
-		if ((1 << i) & features) {
-			feature_array[j] = cache_feature[i];
-			feature_offset[j] = size;
-			feature_type[i] = j;
-			size += cache_feature[i]->size;
-			j++;
-		}
-	}
-
-	memcpy(c->feature_type, feature_type, sizeof(feature_type));
-
-	c->features = malloc(sizeof(struct cache_feature) * j);
-	if (!c->features) {
-		free(c);
-		return NULL;
-	}
-	memcpy(c->features, feature_array, sizeof(struct cache_feature) * j);
-	c->num_features = j;
-
 	c->extra_offset = size;
 	c->extra = extra;
 	if (extra)
 		size += extra->size;
 
-	c->feature_offset = malloc(sizeof(unsigned int) * j);
-	if (!c->feature_offset) {
-		free(c->features);
-		free(c);
-		return NULL;
-	}
-	memcpy(c->feature_offset, feature_offset, sizeof(unsigned int) * j);
-
 	if (!ops || !ops->hash || !ops->cmp ||
 	    !ops->alloc || !ops->copy || !ops->free) {
-		free(c->feature_offset);
-		free(c->features);
 		free(c);
 		return NULL;
 	}
@@ -103,8 +64,6 @@ struct cache *cache_create(const char *name, enum cache_type type,
 				c->ops->hash,
 				c->ops->cmp);
 	if (!c->h) {
-		free(c->features);
-		free(c->feature_offset);
 		free(c);
 		return NULL;
 	}
@@ -117,8 +76,6 @@ void cache_destroy(struct cache *c)
 {
 	cache_flush(c);
 	hashtable_destroy(c->h);
-	free(c->features);
-	free(c->feature_offset);
 	free(c);
 }
 
@@ -183,17 +140,10 @@ void cache_object_set_status(struct cache_object *obj, int status)
 static int __add(struct cache *c, struct cache_object *obj, int id)
 {
 	int ret;
-	unsigned int i;
-	char *data = obj->data;
 
 	ret = hashtable_add(c->h, &obj->hashnode, id);
 	if (ret == -1)
 		return -1;
-
-	for (i = 0; i < c->num_features; i++) {
-		c->features[i]->add(obj, data);
-		data += c->features[i]->size;
-	}
 
 	if (c->extra && c->extra->add)
 		c->extra->add(obj, ((char *) obj) + c->extra_offset);
@@ -222,15 +172,7 @@ int cache_add(struct cache *c, struct cache_object *obj, int id)
 
 void cache_update(struct cache *c, struct cache_object *obj, int id, void *ptr)
 {
-	char *data = obj->data;
-	unsigned int i;
-
 	c->ops->copy(obj->ptr, ptr, NFCT_CP_META);
-
-	for (i = 0; i < c->num_features; i++) {
-		c->features[i]->update(obj, data);
-		data += c->features[i]->size;
-	}
 
 	if (c->extra && c->extra->update)
 		c->extra->update(obj, ((char *) obj) + c->extra_offset);
@@ -242,14 +184,6 @@ void cache_update(struct cache *c, struct cache_object *obj, int id, void *ptr)
 
 static void __del(struct cache *c, struct cache_object *obj)
 {
-	unsigned i;
-	char *data = obj->data;
-
-	for (i = 0; i < c->num_features; i++) {
-		c->features[i]->destroy(obj, data);
-		data += c->features[i]->size;
-	}
-
 	if (c->extra && c->extra->destroy)
 		c->extra->destroy(obj, ((char *) obj) + c->extra_offset);
 

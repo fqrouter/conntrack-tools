@@ -8,8 +8,6 @@ struct cache_object;
 struct fds;
 
 struct sync_mode {
-	int internal_cache_flags;
-	int external_cache_flags;
 	struct cache_extra *internal_cache_extra;
 	struct cache_extra *external_cache_extra;
 
