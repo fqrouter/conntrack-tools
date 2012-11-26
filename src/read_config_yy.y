@@ -88,7 +88,7 @@ enum {
 %token T_DISABLE_INTERNAL_CACHE T_DISABLE_EXTERNAL_CACHE T_ERROR_QUEUE_LENGTH
 %token T_OPTIONS T_TCP_WINDOW_TRACKING T_EXPECT_SYNC
 %token T_HELPER T_HELPER_QUEUE_NUM T_HELPER_QUEUE_LEN T_HELPER_POLICY
-%token T_HELPER_EXPECT_TIMEOUT T_HELPER_EXPECT_MAX
+%token T_HELPER_EXPECT_TIMEOUT T_HELPER_EXPECT_MAX T_TRACK
 
 %token <string> T_IP T_PATH_VAL
 %token <val> T_NUMBER
@@ -112,6 +112,7 @@ line : ignore_protocol
      | sync
      | stats
      | helper
+     | track
      ;
 
 logfile_bool : T_LOG T_ON
@@ -1773,6 +1774,17 @@ helper_policy_expect_timeout: T_HELPER_EXPECT_TIMEOUT T_NUMBER
 	policy = (struct ctd_helper_policy *) &e->data;
 	policy->expect_timeout = $2;
 	stack_item_push(&symbol_stack, e);
+};
+
+track: T_TRACK '{' '}'
+{
+	if (conf.flags & CTD_CTNL) {
+		print_err(CTD_CFG_ERROR, "cannot use both `Track' with "
+					 "`Sync' or `Stats' clauses in "
+					 "conntrackd.conf");
+		exit(EXIT_FAILURE);
+	}
+	conf.flags |= CTD_TRACK_MODE | CTD_CTNL;
 };
 
 %%

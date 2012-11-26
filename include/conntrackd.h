@@ -71,6 +71,7 @@
 #define CTD_EXPECT		(1UL << 6)
 #define CTD_HELPER		(1UL << 7)
 #define CTD_CTNL		(1UL << 8)
+#define CTD_TRACK_MODE		(1UL << 9)
 
 /* FILENAME_MAX is 4096 on my system, perhaps too much? */
 #ifndef FILENAME_MAXLEN
@@ -294,6 +295,7 @@ int cthelper_init(void);
 /* conntrackd ctnl modes */
 extern struct ct_mode sync_mode;
 extern struct ct_mode stats_mode;
+extern struct ct_mode track_mode;
 
 #define MAX(x, y) x > y ? x : y
 

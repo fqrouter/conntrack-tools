@@ -148,6 +148,7 @@ notrack		[N|n][O|o][T|t][R|r][A|a][C|c][K|k]
 "Policy"			{ return T_HELPER_POLICY; }
 "ExpectMax"			{ return T_HELPER_EXPECT_MAX; }
 "ExpectTimeout"			{ return T_HELPER_EXPECT_TIMEOUT; }
+"Track"				{ return T_TRACK; }
 
 {is_on}			{ return T_ON; }
 {is_off}		{ return T_OFF; }
