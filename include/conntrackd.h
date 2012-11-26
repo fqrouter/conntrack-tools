@@ -70,6 +70,7 @@
 #define CTD_POLL		(1UL << 5)
 #define CTD_EXPECT		(1UL << 6)
 #define CTD_HELPER		(1UL << 7)
+#define CTD_CTNL		(1UL << 8)
 
 /* FILENAME_MAX is 4096 on my system, perhaps too much? */
 #ifndef FILENAME_MAXLEN

@@ -797,12 +797,12 @@ ignore_proto: T_STRING
 
 sync: T_SYNC '{' sync_list '}'
 {
-	if (conf.flags & CTD_STATS_MODE) {
+	if (conf.flags & CTD_CTNL) {
 		print_err(CTD_CFG_ERROR, "cannot use both `Stats' and `Sync' "
 					 "clauses in conntrackd.conf");
 		exit(EXIT_FAILURE);
 	}
-	conf.flags |= CTD_SYNC_MODE;
+	conf.flags |= CTD_SYNC_MODE | CTD_CTNL;
 };
 
 sync_list:
@@ -1497,12 +1497,12 @@ filter_state_item : tcp_states T_FOR T_TCP;
 
 stats: T_STATS '{' stats_list '}'
 {
-	if (conf.flags & CTD_SYNC_MODE) {
+	if (conf.flags & CTD_CTNL) {
 		print_err(CTD_CFG_ERROR, "cannot use both `Stats' and `Sync' "
 					 "clauses in conntrackd.conf");
 		exit(EXIT_FAILURE);
 	}
-	conf.flags |= CTD_STATS_MODE;
+	conf.flags |= CTD_STATS_MODE | CTD_CTNL;
 };
 
 stats_list:

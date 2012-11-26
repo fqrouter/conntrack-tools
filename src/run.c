@@ -52,7 +52,7 @@ void killer(int signal)
 
 	local_server_destroy(&STATE(local));
 
-	if (CONFIG(flags) & (CTD_SYNC_MODE | CTD_STATS_MODE))
+	if (CONFIG(flags) & CTD_CTNL)
 		ctnl_kill();
 
 	if (CONFIG(flags) & CTD_HELPER)
@@ -202,7 +202,7 @@ static int local_handler(int fd, void *data)
 		break;
 	}
 
-	if (CONFIG(flags) & (CTD_SYNC_MODE | CTD_STATS_MODE))
+	if (CONFIG(flags) & CTD_CTNL)
 		return ctnl_local(fd, type, data);
 
 	if (CONFIG(flags) & CTD_HELPER)
@@ -255,7 +255,7 @@ init(void)
 		return -1;
 
 	/* Initialization */
-	if (CONFIG(flags) & (CTD_SYNC_MODE | CTD_STATS_MODE))
+	if (CONFIG(flags) & CTD_CTNL)
 		if (ctnl_init() < 0)
 			return -1;
 
