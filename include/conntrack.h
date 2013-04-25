@@ -12,6 +12,16 @@
 #define NUMBER_OF_CMD   19
 #define NUMBER_OF_OPT   24
 
+#define HAVE_ARPA_INET_H
+#define PACKAGE_NAME "conntrack-tools"
+#define PACKAGE_TARNAME "conntrack-tools"
+#define PACKAGE_VERSION "1.4.1"
+#define PACKAGE_STRING "conntrack-tools 1.4.1"
+#define PACKAGE_BUGREPORT "pablo@netfilter.org"
+#define PACKAGE_URL ""
+#define PACKAGE "conntrack-tools"
+#define VERSION "1.4.1"
+
 struct ctproto_handler {
 	struct list_head 	head;
 
@@ -54,12 +64,6 @@ extern void register_proto(struct ctproto_handler *h);
 
 extern void register_tcp(void);
 extern void register_udp(void);
-extern void register_udplite(void);
-extern void register_sctp(void);
-extern void register_dccp(void);
-extern void register_icmp(void);
-extern void register_icmpv6(void);
-extern void register_gre(void);
 extern void register_unknown(void);
 
 #endif
